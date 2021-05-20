@@ -1,0 +1,6 @@
+Django
+pymysql
+mysqlclient
+Pillow
+django-crispy-forms
+django-summernote
