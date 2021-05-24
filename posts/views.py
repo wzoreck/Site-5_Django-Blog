@@ -4,6 +4,7 @@ from django.views.generic.list import ListView
 from django.views.generic.edit import UpdateView
 from django.db.models import Q, Count, Case, When # por conta do qs.annotate
 from .models import Post
+from comentarios.forms import FormComentario
 
 # Create your views here.
 class PostIndex(ListView):
@@ -61,5 +62,10 @@ class PostCategoria(PostIndex):
 
         return qs
 
-class PostDetalhes(UpdateView):
-    pass
+class PostDetalhes(UpdateView): # UpdateView espera um formulário, não esta sendo feito isso agr, mas é o correto
+    template_name = 'posts/post_detalhes.html'
+    model = Post
+    # Estamos pegando/aproveitando o formulário lá do app comentarios
+    form_class = FormComentario
+    # Nome para acessarmos o post no template
+    context_object_name = 'post'
