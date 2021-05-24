@@ -1,7 +1,8 @@
 import django
 from django.db import connection
 from django.db.models.query_utils import Q
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
+from django.views.generic.base import View
 from django.views.generic.list import ListView
 from django.views.generic.edit import UpdateView
 from django.db.models import Q, Count, Case, When # por conta do qs.annotate
@@ -75,38 +76,36 @@ class PostCategoria(PostIndex):
 
         return qs
 
-class PostDetalhes(UpdateView): # UpdateView espera um formulário, não esta sendo feito isso agr, mas é o correto
+class PostDetalhes(View):
     template_name = 'posts/post_detalhes.html'
-    model = Post
-    # Estamos pegando/aproveitando o formulário lá do app comentarios
-    form_class = FormComentario
-    # Nome para acessarmos o post no template
-    context_object_name = 'post'
 
-    # Validação do formulário de cometário post, aqui que vamos criar o objeto comentário!!!
-    def form_valid(self, form):
-        post = self.get_object()
-        # Enquanto não criar o comentário e mandar salvar não vai salvar
-        comentario = Comentario(**form.cleaned_data)
-        # Terminar de atribuir dados ao objeto comentario (Campos que faltaram)
-        comentario.post_comentario = post
+    def setup(self, request, *args, **kwargs):
+        super().setup(request, *args, **kwargs)
+        pk = self.kwargs.get('pk')
+        post = get_object_or_404(Post, pk=pk, publicado_post=True)
+        # Criando um dicionário com os objetos utilizados no template para não precisar alterar o template
+        self.contexto = {
+            'post': post,
+            'comentarios': Comentario.objects.filter(post_comentario=post, publicado_comentario=True),
+            'form': FormComentario(request.POST or None),
+        }
 
-        if self.request.user.is_authenticated:
-            comentario.usuario_comentario = self.request.user
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name, self.contexto)
+
+    def post(self, request, *args, **kwargs):
+        form = self.contexto['form']
+
+        if not form.is_valid():
+            return render(request, self.template_name, self.contexto)
         
+        # Validado o formulário, mas ainda não salvando na base de dados
+        comentario = form.save(commit=False)
+
+        if request.user.is_authenticated:
+            comentario.usuario_comentario = request.user
+        
+        comentario.post_comentario = self.contexto['post']
         comentario.save()
-        messages.success(self.request, 'Comentário enviado com sucesso')
-        
-        return redirect('post_detalhes', pk=post.id) # pk é como foi definido na url
-
-    # Para aparecer apenas os comentários publicados
-    def get_context_data(self, **kwargs):
-        # O contexto é o Post que injetado no template
-        contexto = super().get_context_data(**kwargs)
-        post = self.get_object()
-        # Comentarios vindos da base de dados, a serem exibidos no template
-        comentarios = Comentario.objects.filter(publicado_comentario=True, post_comentario=post.id)
-
-        contexto['comentarios'] = comentarios
-        
-        return contexto
+        messages.success(request, 'Comentário enviado')
+        return redirect('post_detalhes', pk=self.kwargs.get('pk'))
