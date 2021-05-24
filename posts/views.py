@@ -1,10 +1,13 @@
+import django
 from django.db.models.query_utils import Q
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views.generic.list import ListView
 from django.views.generic.edit import UpdateView
 from django.db.models import Q, Count, Case, When # por conta do qs.annotate
 from .models import Post
 from comentarios.forms import FormComentario
+from comentarios.models import Comentario
+from django.contrib import messages
 
 # Create your views here.
 class PostIndex(ListView):
@@ -69,3 +72,19 @@ class PostDetalhes(UpdateView): # UpdateView espera um formulário, não esta se
     form_class = FormComentario
     # Nome para acessarmos o post no template
     context_object_name = 'post'
+
+    # Validação do formulário de cometário post, aqui que vamos criar o objeto comentário!!!
+    def form_valid(self, form):
+        post = self.get_object()
+        # Enquanto não criar o comentário e mandar salvar não vai salvar
+        comentario = Comentario(**form.cleaned_data)
+        # Terminar de atribuir dados ao objeto comentario (Campos que faltaram)
+        comentario.post_comentario = post
+
+        if self.request.user.is_authenticated:
+            comentario.usuario_comentario = self.request.user
+        
+        comentario.save()
+        messages.success(self.request, 'Comentário enviado com sucesso')
+        
+        return redirect('post_detalhes', pk=post.id) # pk é como foi definido na url
