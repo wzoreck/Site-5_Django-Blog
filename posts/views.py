@@ -1,4 +1,5 @@
 import django
+from django.db import connection
 from django.db.models.query_utils import Q
 from django.shortcuts import render, redirect
 from django.views.generic.list import ListView
@@ -18,6 +19,8 @@ class PostIndex(ListView):
 
     def get_queryset(self):
         qs = super().get_queryset()
+        # Para otimizar as consultas sql, estavam sendo feitas muitas por conta do campo categoria_post
+        qs = qs.select_related('categoria_post') 
         qs = qs.order_by('-id').filter(publicado_post=True) # Ordenando de forma decrescente pelo id
         # .filter(publicado_post=True) para exibir apenas os Posts marcados como publicados
 
@@ -29,7 +32,14 @@ class PostIndex(ListView):
                 )
             ) 
         )
-        return qs 
+        return qs
+    
+    def get_context_data(self, **kwargs):
+        contexto = super().get_context_data(**kwargs)
+        contexto['connection'] = connection
+
+        return contexto
+
 
 class PostBusca(PostIndex):
     template_name = 'posts/post_busca.html'
