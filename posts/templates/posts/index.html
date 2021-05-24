@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load humanize %}
+{% load filtros %}
 
 {% block conteudo %}
     <!-- CONTENT -->
@@ -23,7 +24,7 @@
                     {{ post.data_post|naturalday|title }} <!-- |naturalday para utilizar o app humanize que pegará a data e colocará como ontem, hoje -->
                     | 
                     <!-- {{ post.comentario_set.count }} comentário(s) FORMA QUE CONTAVA TODOS OS COMENTARIOS, O FORMATO ABAIXO PUXA DE VIEWS O CAMPO CRIADO PARA CONTAR APENAS COMENTARIOS PUBLICADOS-->
-                    {{ post.num_comentario }} comentário(s)
+                    {{ post.num_comentario|plural_comentarios }}
                     | 
                     {{ post.categoria_post }}
                     </small>
