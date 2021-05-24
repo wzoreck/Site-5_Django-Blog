@@ -88,3 +88,15 @@ class PostDetalhes(UpdateView): # UpdateView espera um formulário, não esta se
         messages.success(self.request, 'Comentário enviado com sucesso')
         
         return redirect('post_detalhes', pk=post.id) # pk é como foi definido na url
+
+    # Para aparecer apenas os comentários publicados
+    def get_context_data(self, **kwargs):
+        # O contexto é o Post que injetado no template
+        contexto = super().get_context_data(**kwargs)
+        post = self.get_object()
+        # Comentarios vindos da base de dados, a serem exibidos no template
+        comentarios = Comentario.objects.filter(publicado_comentario=True, post_comentario=post.id)
+
+        contexto['comentarios'] = comentarios
+        
+        return contexto
