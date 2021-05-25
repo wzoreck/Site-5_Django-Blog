@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+    'crispy_forms',
 ]
 
 INSTALLED_APPS += ('django_summernote',)
@@ -148,3 +149,5 @@ MESSAGE_TAGS = {
     constants.SUCCESS: 'alert-success',
     constants.DEBUG: 'alert-info'
 }
+
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
